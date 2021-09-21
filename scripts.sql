@@ -129,21 +129,51 @@ END;
 --Aula 11
 
 SET SERVEROUTPUT ON 
-VARIABLE gmeia NUMBER
+VARIABLE gmedia NUMBER
 DECLARE
     vnumero1 NUMBER(11,2) := 2000;
     vnumero2 NUMBER(11,2) := 5000;
 BEGIN 
     :gmedia := (vnumero1 + vnumero2) / 2;
-    DBMS_OUTPUT.PUT_LINE('Media = ' || TO_CHAR(:gemedia) );     
+    DBMS_OUTPUT.PUT_LINE('Media = ' || TO_CHAR(:gmedia) );     
 EXCEPTION
     WHEN OTHERS 
     THEN
         DBMS_OUTPUT.PUT_LINE('Erro Oracle: ' || SQLCODE || SQLERRM );     
 END;
 
+----------------------------------------------------------
+--Aula 14
 
+SET SERVEROUTPUT ON 
+DECLARE 
+    vNumero1 Number(13,2); --Declaração de variável para o primeiro número
+    vNumero2 Number(13,2); --Declaração de variável para o Segundo número
+    vMedia Number(13,2); --Declaração de variável para a Média.
+BEGIN
+    vNumero1 := 5000.8888;
+    vNumero2 := 3000.4444;
+    vMedia := Round((vNumero1 + vNumero2)/2,2); --Round Arredonda o valor   
+    DBMS_OUTPUT.PUT_LINE('vnumero1 ' || vnumero1);     
+    DBMS_OUTPUT.PUT_LINE('vnumero2 ' || vnumero2);     
+    DBMS_OUTPUT.PUT_LINE('media = ' || TO_CHAR(vMedia,99G999G999D99));         
+END;
+
+----------------------------------------------------------
+--Aula 15
+
+SET SERVEROUTPUT ON 
+DECLARE 
+    vBloco1 varchar2(20) := 'Bloco 1';
+BEGIN
+    DBMS_OUTPUT.PUT_LINE('Referencia variável Bloco 1: ' || vnumero1);
     
+    DECLARE 
+        vBloco2 varchar2(20) := 'Bloco 2';
+    BEGIN
+        DBMS_OUTPUT.PUT_LINE('Referencia variável Bloco 1: ' || vnumero1);
+        DBMS_OUTPUT.PUT_LINE('Referencia variável Bloco 2: ' || vBloco2);
+    END;
     
-
-
+    DBMS_OUTPUT.PUT_LINE('Referencia variável Bloco 1: ' || vnumero1);
+END;
