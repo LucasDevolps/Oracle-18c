@@ -6,6 +6,9 @@ DECLARE
          'SQLCODE' mostra o código do erro
          'SQLERRM' mostra a descrição do erro
          ':variavel ' mostra pro compilador que a variável foi declarada fora da sessão DECLARE
+         'ACCEPT vai exibir uma mensagem no console pedindo para que o usuário digite algo, assim que digitar
+         sera atribuido o valor apra a variavel 
+         '&Nome da variavel => variavel de substituição 
         
     */
 
@@ -292,3 +295,84 @@ BEGIN
     COMMIT;
 END;
 
+
+----------------------------------------------------------
+--Algumas aulas perdidas 
+
+----------------------------------------------------------
+
+
+----------------------------------------------------------
+--Aula 24 - Operadores (Regra de precedência)
+
+
+SET SERVEROUTPUT ON 
+DECLARE
+    vNota1  Number(11,2) := 7.0;
+    vNota2  Number(11,2) := 6.0;
+    vNota3  Number(11,2) := 9.0;
+    vNota4  Number(11,2) := 6.0;
+    vMedia  Number(11,2);
+BEGIN 
+    vMedia := (vNota1 + vNota2 + vNota3 + vNota4) / 4;
+    DBMS_OUTPUT.PUT_LINE('Média: ' || vMedia);             
+END;
+
+----------------------------------------------------------
+--Aula 25 - Comando IF
+
+
+SET SERVEROUTPUT ON
+ACCEPT pdepartment_id PROMPT 'Digite o Id do departamento: '
+DECLARE
+    vpercentual number(3);
+    vDepartment_id employees.employee_id%type := &pdepartment_id;
+BEGIN
+    IF vDepartment_id = 80 THEN
+        vpercentual := 10; --Sales
+    ELSE
+        IF vDepartment_id = 20 THEN
+            vpercentual := 15; --Marketing
+        ELSE
+            IF vDepartment_id = 60 THEN
+                vpercentual := 20; --IT
+            ELSE
+                vpercentual := 5;
+            END IF;
+        END IF;
+    END IF;
+    DBMS_OUTPUT.PUT_LINE('Id do Departamento: ' || vdepartment_id);                         
+    DBMS_OUTPUT.PUT_LINE('Percentual: ' || vpercentual);        
+    
+    UPDATE employees
+    SET salary = salary * (1 + vpercentual / 100)
+    where department_id = &pdepartment_id;
+    COMMIT;   
+END;
+
+
+---- COMANDO IF ELSE IF 
+
+SET SERVEROUTPUT ON 
+ACCEPT pdepartment_id PROMPT 'Digite o Id do departamento: '
+DECLARE 
+    vpercentual number(3);
+    vDepartment_id employees.employee_id%type := &pdepartment_id;
+BEGIN
+    IF vDepartment_id = 80 THEN
+        vpercentual := 10; -- Sales
+    ELSIF vDepartment_id = 20 THEN
+        vpercentual := 15; --Marketing
+    ELSIF vDepartment_id = 60 then
+        vpercentual := 20; --IT
+    ELSE
+        vpercentual := 5;    
+    END IF;
+    DBMS_OUTPUT.PUT_LINE('Id do departamento: ' || vDepartment_id);
+    DBMS_OUTPUT.PUT_LINE('Percentual: ' || vpercentual);
+    
+    UPDATE employees
+    SET salary = salary * (1 + vpercentual / 100)
+    WHERE department_id = vDepartment_id;
+    COMMIT;
+END;
