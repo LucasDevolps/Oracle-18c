@@ -465,6 +465,7 @@ SET SERVEROUTPUT ON
 DECLARE
     vTotal Number(38) := 1;
 BEGIN
+    --Lable, indica uma posição no código
     <<LOOP1>>
     FOR i in 1..8 LOOP
         DBMS_OUTPUT.PUT_LINE('I = '|| to_char(i));
