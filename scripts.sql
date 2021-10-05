@@ -428,4 +428,54 @@ BEGIN
 END;
 
 ----------------------------------------------------------
---Aula 28   - Comando LOOP
+--Aula 28   - Comando FOR LOOP
+
+
+SET SERVEROUTPUT ON
+ACCEPT pLimite PROMPT 'Digite o valor do limite: '
+DECLARE
+    vInicio Integer(3) := 1;
+    vFim    Number(38) := &pLimite;
+BEGIN
+    FOR i in vInicio..vFim LOOP
+        DBMS_OUTPUT.PUT_LINE('Número = ' || to_char(i));
+    END LOOP;
+
+END;
+
+----------------------------------------------------------
+--Aula 29   - Comando WHILE LOOP
+
+SET SERVEROUTPUT ON
+ACCEPT pLimite PROMPT 'Digite o valor do limite: '
+DECLARE
+    vNumero Number(38) := 1;
+    vLimite Number(38) := &pLimite;
+BEGIN
+    WHILE vNumero <= vLimite LOOP
+        DBMS_OUTPUT.PUT_LINE('Número = ' || to_char(vNumero));
+        vNumero := vNumero + 1;
+    END LOOP;
+END;
+
+----------------------------------------------------------
+--Aula 29   - Controlando Loop's aninhados
+
+SET SERVEROUTPUT ON
+DECLARE
+    vTotal Number(38) := 1;
+BEGIN
+    <<LOOP1>>
+    FOR i in 1..8 LOOP
+        DBMS_OUTPUT.PUT_LINE('I = '|| to_char(i));
+        <<LOOP2>>
+        FOR j in 1..8 LOOP
+            DBMS_OUTPUT.PUT_LINE('J = ' || to_char(j));
+            vTotal := vTotal * 2;
+            DBMS_OUTPUT.PUT_LINE('Total = ' || to_char(vTotal));
+            EXIT LOOP1 WHEN vTotal > 100000000000;
+        END LOOP;
+    END LOOP;
+END;
+
+
