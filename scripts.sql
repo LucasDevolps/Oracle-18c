@@ -560,8 +560,9 @@ BEGIN
     --Armazena número de 1 a 10 em um Associative Array
     
     FOR I IN 1..10 LOOP
-        Numero_Table(I) := I;
+        Numero_Table(I) := (I * 3)+I;
     END LOOP;
+    
     --Lê o Associative Array e imrpime os números armazenados
     FOR I IN 1..10 LOOP
         DBMS_OUTPUT.PUT_LINE('Associative Array: Indice = ' || To_char(i) ||', Valor = ' || To_char(Numero_table(i)));
