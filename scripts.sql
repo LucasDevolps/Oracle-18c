@@ -569,6 +569,109 @@ BEGIN
     END LOOP;
 END; 
 
+----------------------------------------------------------
+--Aula 34 - Associative Array de Records (Não funcionando)
+
+SET SERVEROUTPUT ON
+SET VERIFY OFF
+DECLARE
+    TYPE employees_table_type IS TABLE OF employees%rowtype
+    INDEX BY BINARY_INTEGER; --Type associative Array
+    employees_table employees_table_type;
+BEGIN
+    SELECT *
+        BULK COLLECT INTO employees_table -- bulk Collection todos (order_id) para a Collection (vorder_id)
+    FROM employees;
+        FOR i IN employees_table.first..employees_table.last 
+        LOOP
+            /*DBMS_OUTPUT.PUT_LINE(
+                employees_table(i).employee_id  || ' - ' ||
+                employees_table(i).first_name   || ' - ' || 
+                employees_table(i).last_name    || ' - ' ||
+                employess_table(i).phone_number || ' - ' ||
+                employees_table(i).job_id       || ' - ' ||
+                to_char(employees_table(i).salary,'99G999G999D99')*/
+            );
+        END LOOP;
+END;
+
+----------------------------------------------------------
+--Aula 35 - Collections Nested Table (Não funcionando)
+
+
+
+SET SERVEROUTPUT ON
+SET VERIFY OFF
+DECLARE
+  TYPE Numero_Table_Type IS TABLE OF INTEGER(2);
+  Numero_table numero_table_type := numero_table_type();
+BEGIN
+  -- Armazena números de 1 a 10 em um Nested Table
+  FOR i IN 1..10
+  LOOP
+    Numero_Table.extend;
+    Numero_Table(i) := i;
+  END LOOP;
+  -- O programa vai fazer muitas coisas...
+  -- Lê o Nested Table e imprime os números armazenados
+  FOR I IN 1..10
+  LOOP
+    DBMS_OUTPUT.PUT_LINE('Nested Table: Indice = ' || TO_CHAR(i) || ', Valor = ' || TO_CHAR(Numero_Table(i)));
+  END LOOP;
+END;
+
+----------------------------------------------------------
+--Aula 36 - Nested Table of Records 
+
+SET SERVEROUTPUT ON
+SET VERIFY OFF
+DECLARE
+    TYPE employees_table_type IS TABLE OF employees%rowtype;
+    employees_table employees_table_type := employees_table_type();
+BEGIN
+    SELECT *
+        BULK COLLECT INTO employees_table
+    FROM employees;
+    FOR i IN employees_table.first..employees_table.last LOOP
+        DBMS_OUTPUT.PUT_LINE(
+            employees_table(i).employee_id   || ' - ' ||
+            employees_table(i).first_name    || ' - ' ||
+            employees_table(i).last_name     || ' - ' || 
+            employees_table(i).phone_number  || ' - ' || 
+            employees_table(i).job_id        || ' - ' || 
+            to_char(employees_table(i).salary, '99G999G999D99')
+        );
+    END LOOP;
+
+END;
+
+
+----------------------------------------------------------
+--Aula 37 - Collection vArray
+
+SET SERVEROUTPUT ON
+SET VERIFY OFF
+DECLARE
+    TYPE Numero_Table_Type IS VARRAY(10) OF INTEGER(2);
+    Numero_table numero_table_type := numero_table_type();
+BEGIN
+    FOR i IN 1..10 LOOP
+        Numero_table.extend;
+        Numero_table(i) := i;
+    END LOOP;
+    --O programa vai fazer muitas coisas...
+    --Lê o Varray e imprime os números armazenados
+    
+    FOR i in 1..10 LOOP
+        DBMS_OUTPUT.PUT_LINE('Varray: Indice = ' || To_char(i) || ',Valor = ' || To_char(Numero_table(i)));
+    END LOOP;
+    
+END;
+
+----------------------------------------------------------
+--Aula 37 - Collection vArray
+
+
 
 
 
