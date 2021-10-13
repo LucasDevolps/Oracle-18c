@@ -669,9 +669,52 @@ BEGIN
 END;
 
 ----------------------------------------------------------
---Aula 37 - Collection vArray
+--Aula 38 - Varray of Records - Bulk Collect
 
+SET SERVEROUTPUT ON
+SET VERIFY OFF
+DECLARE 
+    TYPE employees_table_type IS VARRAY(100) OF employees%rowtype;
+    employee_table employees_table_type := employees_table_type();
+BEGIN 
+    SELECT *
+        BULK COLLECT INTO employees_table
+    FROM employees;
+    FOR I in employees_table.first..employees_table.last LOOP
+        DBMS_OUTPUT.PUT_LINE(
+            employees_table(I).employee_id  || ' - '
+            employees_table(I).first_name   || ' - '
+            employees_table(I).last_name    || ' - '
+            employees_table(I).phone_number || ' - '
+            employees_table(I).job_id       || ' - '
+            To_char(employees_table(I).salary, '99G999G999D9')
+        );
+    END LOOP;
+END;
 
+----------------------------------------------------------
+--Aula 39 - Ultilizando métodos para controlar collections
+
+SET SERVEROUTPUT ON
+SET VERIFY OFF
+DECLARE
+    TYPE employees_table_type IS TABLE OF employees%rowtype;
+    employees_table employees_table_type := employees_table_type();
+BEGIN
+    SELECT *
+        BULK COLLECT INTO employees_table
+    FROM employees;
+    FOR i in employees_table.first..employees_table.last LOOP
+        DBMS_OUTPUT.PUT_LINE(
+            employees_table(i).employee_id   || ' - '
+            employees_table(i).first_name    || ' - '
+            employees_table(i).last_name     || ' - '
+            employees_table(i).phone_number  || ' - '
+            employees_table(i).job_id        || ' - '
+            to_char(employees_table(i).salary, '99G999G999D99')
+        );
+    END LOOP;
+END;
 
 
 
