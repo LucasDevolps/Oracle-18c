@@ -860,17 +860,99 @@ BEGIN
     END LOOP;
 END;
 
+----------------------------------------------------------
+--Aula 43 Cursor Explícito com SELECT FOR UPDATE
 
 
+SET SERVEROUTPUT ON 
+SET VERIFY OFF
+DECLARE
+    CURSOR employees_cursor (pjob_id VARCHAR2)
+    IS 
+    SELECT * 
+    FROM employees
+    WHERE job_id = pjob_id
+    FOR UPDATE;
+BEGIN 
+    FOR employees_record IN employees_cursor ('AD_VP')
+    LOOP
+        UPDATE employees
+        SET salary = salary *(1 + 10 / 100)
+        WHERE CURRENT OF employees_cursor;
+    END LOOP;
+    --COMMIT;
+    ROLLBACK; 
+END;
 
 
+----------------------------------------------------------
+--Aula 44 - Tratamento de Exceções
 
+SET SERVEROUTPUT ON
+SET VERIFY OFF
+ACCEPT pEmployee_id PROMPT 'Digite o Id do Empregado: '
+DECLARE
+    vFirst_name   employees.first_name%TYPE;
+    vLast_name    employees.last_name%TYPE;
+    vEmployee_id  employees.employee_id%TYPE := &pEmployee_id;
+BEGIN
+    SELECT 
+        first_name, last_name 
+    INTO
+        vFirst_name, vLast_name
+    FROM 
+        employees
+    WHERE 
+        employee_id = vEmployee_id;
+        
+        
+    DBMS_OUTPUT.PUT_LINE('Empregado: ' || vFirst_name || ' ' || vLast_name);
 
+EXCEPTION
+    WHEN NO_DATA_FOUND THEN 
+        RAISE_APPLICATION_ERROR(-20001, 'Empregado não encontrado, id = ' || TO_CHAR(vEmployee_id));
+    WHEN OTHERS THEN
+        RAISE_APPLICATION_ERROR(-20002, 'Erro Oracle - ' || SQLCODE || SQLERRM);
+END;
 
+----------------------------------------------------------
+--Aula 45 - Exceções Definidas pelo Dev
 
-
-
-
+SET SERVEROUTPUT ON 
+SET VERIFY OFF
+ACCEPT pEmployee_id PROMPT 'Digite o Id do Empregado: '
+DECLARE 
+    vFirst_name  employees.first_name%Type;                                                                                                                                                                                                                                                 
+    vLast_name   employees.last_name%Type;
+    vJob_id      employees.job_id%Type;
+    vEmployee_id employees.employee_id%Type;
+    ePresident   EXCEPTION ;
+BEGIN
+    SELECT 
+        first_name, last_name, job_id
+    INTO
+        vFirst_name, vLast_name, vJob_id
+    FROM employees
+    WHERE employee_id = vEmployee_id;
+    
+    IF vJob_id = 'AD_PRES' THEN
+        RAISE ePresident
+    END IF;
+    
+    EXCEPTION
+        WHEN NO_DATA_FOUND THEN
+         RAISE_APPLICATION_ERROR(-20001, 'Empregado não encontrado, id = '
+         || TO_CHAR(vEmployee_id)
+         );
+        WHEN ePresident THEN
+            UPDATE employees
+            SET salary = salary * 1.5
+            WHERE employee_id = vEmployee_id;
+            --COMMIT;
+        WHEN OTHERS THEN
+            RAISE_APPLICATION_ERROR(-20002, 'Erro Oracle ' || SQLCODE || SQLERRM);
+END;
+ 
 
 
 
