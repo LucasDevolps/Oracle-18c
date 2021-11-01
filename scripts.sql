@@ -1041,9 +1041,28 @@ EXEC PRC_INSERE_EMPREGADO('Greg','Lake', 'GLAKE', '515.127.4961',SYSDATE,'IT_PRO
 
 COMMIT;
 
+----------------------------------------------------------
+--Aula 48 - Ultilizando parâmetros tipo IN
 
+CREATE OR REPLACE PROCEDURE PRC_AUMENTA_SALARIO_EMPREGO(
+    p_employee_id  IN NUMBER,
+    p_percentual   IN NUMBER
+)
+IS 
+-- Nunhuma váriavel declarada 
+BEGIN
+    UPDATE employees
+    SET salary = salary * (1 + p_percentual / 100)
+    WHERE employee_id = p_employee_id;
+EXCEPTION
+    WHEN OTHERS THEN
+        RAISE_APPLICATION_ERROR(-20001, 'Erro Oracle' || SQLCODE || SQLERRM);
+END;
 
-
+BEGIN 
+    PRC_AUMENTA_SALARIO_EMPREGO(109,10);
+    ROLLBACK;
+END;
 
 
 
