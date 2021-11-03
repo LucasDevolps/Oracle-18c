@@ -1067,8 +1067,153 @@ END;
 ----------------------------------------------------------
 --Aula 49 - Ultilizando parâmetros tipo IN e IN OUT
 
+CREATE OR REPLACE PROCEDURE PRC_CONSULTA_EMPREGADO(
+    pemployee_id    IN NUMBER,
+    pfirst_name     OUT VARCHAR2,
+    plast_name      OUT VARCHAR2,
+    pemail          OUT VARCHAR2,
+    pphone_number   OUT VARCHAR2,
+    phire_date      OUT DATE,
+    pjob_id         OUT VARCHAR2,
+    pSalary         OUT NUMBER,
+    pCommission_PCT OUT NUMBER,
+    pManager_id     OUT NUMBER,
+    pDepartment_id  OUT NUMBER
+)
+IS 
+-- DECLARAÇÃO DE VÁRIAVEIS
+BEGIN
+    SELECT 
+        first_name,
+        last_name,
+        email,
+        phone_number,
+        hire_date,
+        job_id,
+        salary,
+        commission_pct,
+        manager_id,
+        department_id
+INTO
+    pfirst_name,
+    plast_name,
+    pemail,
+    pphone_number,
+    phire_date,
+    pjob_id,
+    pSalary,
+    pCommission_PCT,
+    pManager_id,
+    pDepartment_id
+FROM employees
+WHERE employee_id = pemployee_id;
+EXCEPTION
+    WHEN NO_DATA_FOUND THEN
+        RAISE_APPLICATION_ERROR(-20001,'Empregado não existe: '|| pemployee_id);
+    WHEN OTHERS THEN
+        RAISE_APPLICATION_ERROR(-20002,'Erro Oracle: '|| SQLCODE || SQLERRM);
+END;
+
+-- Executando procedure parametrop Tipo Out
+
+SET SERVEROUTPUT ON 
+SET VERIFY OFF
+DECLARE 
+    employees_record employees%ROWTYPE;
+BEGIN
+    PRC_CONSULTA_EMPREGADO(100,employees_record.first_name, employees_record.last_name, employees_record.email
+    employees_record.phone_number, employees_record.hire_date, employees_record.job_id, employees_record.salary,
+    employees_record.commission_pct, employees_record.manager_id, employees_record.department_id);
+    DBMS_OUTPUT.PUT_LINE(
+        employees_record.first_name || ' '
+        employees_record.last_name || ' '
+        employees_record.department_id || ' '
+        employees_record.job_id || ' '
+        employees_record.phone_number || ' '
+        LTRIM(TO_CHAR(employees_record.salary, 'L99G999G999D99'))
+    );
+END;
 
 
+CREATE OR REPLACE PROCEDURE PRC_CONSULTA_EMPREGADO(
+    pemployee_id    IN NUMBER,
+    pfirst_name     OUT NOCOPY VARCHAR2,
+    plast_name      OUT NOCOPY VARCHAR2,
+    pemail          OUT NOCOPY VARCHAR2,
+    pphone_number   OUT NOCOPY VARCHAR2,
+    phire_date      OUT NOCOPY DATE,
+    pjob_id         OUT NOCOPY VARCHAR2,
+    pSalary         OUT NOCOPY NUMBER,
+    pCommission_PCT OUT NOCOPY NUMBER,
+    pManager_id     OUT NOCOPY NUMBER,
+    pDepartment_id  OUT NOCOPY NUMBER
+)
+IS 
+-- DECLARAÇÃO DE VÁRIAVEIS
+BEGIN
+    SELECT 
+        first_name,
+        last_name,
+        email,
+        phone_number,
+        hire_date,
+        job_id,
+        salary,
+        commission_pct,
+        manager_id,
+        department_id
+INTO
+    pfirst_name,
+    plast_name,
+    pemail,
+    pphone_number,
+    phire_date,
+    pjob_id,
+    pSalary,
+    pCommission_PCT,
+    pManager_id,
+    pDepartment_id
+FROM employees
+WHERE employee_id = pemployee_id;
+EXCEPTION
+    WHEN NO_DATA_FOUND THEN
+        RAISE_APPLICATION_ERROR(-20001,'Empregado não existe: '|| pemployee_id);
+    WHEN OTHERS THEN
+        RAISE_APPLICATION_ERROR(-20002,'Erro Oracle: '|| SQLCODE || SQLERRM);
+END;
+
+----------------------------------------------------------
+--Aula 50 - Métodos de passagem de Parâmetros 
+
+SET SERVEROUTPUT ON
+SET VERIFY OFF
+DECLARE 
+    V_EMPLOYEE_ID     NUMBER := 100;
+    V_FIRST_NAME      VARCHAR2(200);
+    V_LAST_NAME       VARCHAR2(200);
+    V_EMAIL           VARCHAR2(200);
+    V_PHONE_NUMBER    VARCHAR2(200);
+    V_HIRE_DATE       DATE;
+    V_JOB_ID          VARCHAR2(200);
+    V_SALARY          NUMBER;
+    V_COMMISSION_PCT  NUMBER;
+    V_MANAGER_ID      NUMBER;
+    V_DEPARTMENT_ID   NUMBER;
+BEGIN 
+     PRC_CONSULTA_EMPREGADO(
+        P_EMPLOYEE_ID    => V_EMPLOYEE_ID,
+        P_FIRST_NAME     => V_FIRST_NAME,
+        P_LAST_NAME      => V_LAST_NAME,
+        P_EMAIL          => V_EMAIL,
+        P_PHONE_NUMBER   => V_PHONE_NUMBER,
+        P_HIRE_DATE      => V_HIRE_DATE,
+        P_JOB_ID         => V_JOB_ID,
+        P_SALARY         => V_SALARY,
+        P_COMMISSION_PCT => V_COMMISSION_PCT,
+        P_MANAGER_ID     => V_MANAGER_ID,
+        P_DEPARTMENT_ID  => V_DEPARTMENT_ID
+    );
+END;
 
 
 
