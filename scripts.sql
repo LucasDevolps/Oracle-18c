@@ -1064,6 +1064,10 @@ BEGIN
     ROLLBACK;
 END;
 
+----------------------------------------------------------
+--Aula 49 - Ultilizando parâmetros tipo IN e IN OUT
+
+
 
 
 
