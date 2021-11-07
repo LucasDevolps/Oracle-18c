@@ -1215,5 +1215,56 @@ BEGIN
     );
 END;
 
+----------------------------------------------------------
+--Aula 51 - Recompilando procedures de banco de dados
+
+
+ALTER PROCEDURE PRC_INSERE_EMPREGADO COMPILE;
+
+----------------------------------------------------------
+--Aula 57 - Criando Funções de Banco de Dados
+
+CREATE OR REPLACE FUNCTION FNC_CONSULTA_SALARIO
+(
+    pEmployee_id IN NUMBER
+)
+RETURN NUMBER
+IS 
+  vSalary  employees.salary%TYPE;
+BEGIN
+    SELECT salary
+    INTO   vSalary
+    FROM   employees
+    WHERE  employee_id = pEmployee_id;
+    RETURN (vSalary);
+EXCEPTION
+    WHEN NO_DATA_FOUND THEN
+      RAISE_APPLICATION_ERROR(-20001, 'Empregado inexistente');
+    WHEN OTHERS THEN
+      RAISE_APPLICATION_ERROR(-20001, 'Erro Oracle' || SQLCODE || SQLERRM);
+END;
+
+
+--Executando a Função pelo Bloco PL/SQL
+
+
+SET SERVEROUTPUT ON
+SET VERIFY OFF
+ACCEPT pEmployee_id PROMPT 'Digite o Id do empregado: '
+DECLARE
+    vEmployee_id  employees.employee_id%TYPE := &pEmployee_id;
+    vSalary       employees.salary%TYPE;
+    vNome         employees.first_name%TYPE;
+BEGIN
+    vSalary := FNC_CONSULTA_SALARIO(vEmployee_id);
+    SELECT first_name
+    INTO vNome
+    FROM employees
+    WHERE employee_id = vEmployee_id;
+    DBMS_OUTPUT.PUT_LINE('O colaborador ' || vNome || ' tem o salario de: ' || LTRIM(TO_CHAR(vSalary, 'L99G999G999D99')));
+END;
+
+
+
 
 
