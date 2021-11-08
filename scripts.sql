@@ -1324,6 +1324,8 @@ FROM dual;
 
 ALTER FUNCTION FNC_CONSULTA_TITULO_CARGO_EMPREGADO COMPILE;
 
+----------------------------------------------------------
+--Aula 60 - Removendo Funções do Banco de Dados
 
-
+--DROP FUNCTION FNC_CONSULTA_TITULO_CARGO_EMPREGADO;
 
