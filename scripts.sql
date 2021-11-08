@@ -1265,6 +1265,52 @@ BEGIN
 END;
 
 
+----------------------------------------------------------
+--Aula 58 - Ultilizando Funções em comandos SQL
 
 
+
+/*
+    Regras para o uso de Funções em comandos SQL
+    
+    * As funções devem ser armazenadas no servidor de banco de dados 
+    * A função deve ser do tipo Single-Row
+    * No corpo da função, não podem gaver comandos DML
+    * A função deve conter apenas parâmetros do tipo "IN"
+    * Tipos PL/SQL, tais como BOOLEAN, RECORD ou Table não são aceitos como tipo de retorno da função
+    * No corpo da função, não são permitidas chamadas à subrotinas que desobedeçam quaisquer das restrições anteriores
+*/
+
+
+CREATE OR REPLACE FUNCTION FNC_CONSULTA_TITULO_CARGO_EMPREGADO
+(  pJob_id   IN   jobs.job_id%TYPE  )
+RETURN VARCHAR2
+IS 
+    vJob_title  jobs.job_title%TYPE;
+BEGIN
+    SELECT job_title
+    INTO   vJob_title
+    FROM jobs
+    WHERE job_id = pJob_id;
+    RETURN (vJob_title);
+EXCEPTION
+    WHEN NO_DATA_FOUND THEN
+        RAISE_APPLICATION_ERROR(-20001,'Job inexistente');
+    WHEN OTHERS THEN
+        RAISE_APPLICATION_ERROR(-20002,'Erro Oracle: '|| SQLCODE || SQLERRM);
+END;
+
+
+------- Ultilizando Funções em comandos SQL
+
+SELECT 
+    employee_id,
+    first_name,
+    last_name,
+    job_id,
+    FNC_CONSULTA_TITULO_CARGO_EMPREGADO(job_id) 
+FROM 
+    employees;
+
+------- Executando a Função pelo comando SELECT
 
