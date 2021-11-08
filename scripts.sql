@@ -1314,3 +1314,16 @@ FROM
 
 ------- Executando a Função pelo comando SELECT
 
+-- dual é uma tabela que sempre existe que só tem uma linha
+SELECT FNC_CONSULTA_TITULO_CARGO_EMPREGADO('IT_PROG')
+FROM dual;
+
+----------------------------------------------------------
+--Aula 59 - Recompilando funções de Banco de dados 
+
+
+ALTER FUNCTION FNC_CONSULTA_TITULO_CARGO_EMPREGADO COMPILE;
+
+
+
+
