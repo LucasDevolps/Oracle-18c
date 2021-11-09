@@ -1329,3 +1329,49 @@ ALTER FUNCTION FNC_CONSULTA_TITULO_CARGO_EMPREGADO COMPILE;
 
 --DROP FUNCTION FNC_CONSULTA_TITULO_CARGO_EMPREGADO;
 
+----------------------------------------------------------
+--Aula 61 - Gerenciando procedures do banco de dados 
+
+DESC USER_OBJECTS
+
+SELECT object_name, object_type, las_ddl_time, timestamp, status
+FROM user_objects
+WHERE object_type IN ('PROCEDURE','FUNCTION');
+
+-- Consultando objetos Inválidos do schema do seu usuário
+
+DESC USER_OBJECTS
+
+SELECT object_name, object_type, las_ddl_time, timestamp, status
+FROM user_objects
+WHERE status = 'INVALID';
+
+-- Consultando o Código Fonte de procedures e Funções do seu usuário 
+
+DESC user_source
+
+SELECT line, text
+FROM user_source
+WHERE name = 'PRC_INSERE_EMPREGADO' AND 
+      type = 'PROCEDURE'
+ORDER BY line;
+
+-- Consultando o Código Fonte Funções do seu usuário 
+
+SELECT line, text
+FROM user_source
+WHERE name = 'FNC_CONSULTA_SALARIO' AND 
+      type = 'FUNCTION'
+ORDER BY line;
+
+
+-- Consultado parâmetros da procedure ou função
+
+DESC PRC_INSERE_EMPREGADO;
+
+DESC FNC_CONSULTA_SALARIO;
+
+--- CONSULTANDO ERROS DE COMPILAÇÃO
+
+--- FORÇANDO UM ERRO DE COMPILAÇÃO
+
