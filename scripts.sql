@@ -159,7 +159,7 @@ BEGIN
     vMedia := Round((vNumero1 + vNumero2)/2,2); --Round Arredonda o valor   
     DBMS_OUTPUT.PUT_LINE('vnumero1 ' || vnumero1);     
     DBMS_OUTPUT.PUT_LINE('vnumero2 ' || vnumero2);     
-    DBMS_OUTPUT.PUT_LINE('media = ' || TO_CHAR(vMedia,99G999G999D99));         
+    DBMS_OUTPUT.PUT_LINE('media = ' || TO_CHAR(vMedia,99G999G99));         
 END;
 
 ----------------------------------------------------------
@@ -169,16 +169,16 @@ SET SERVEROUTPUT ON
 DECLARE 
     vBloco1 varchar2(20) := 'Bloco 1';
 BEGIN
-    DBMS_OUTPUT.PUT_LINE('Referencia variável Bloco 1: ' || vnumero1);
+    DBMS_OUTPUT.PUT_LINE('Referencia variável Bloco 1: ' || vBloco1);
     
     DECLARE 
         vBloco2 varchar2(20) := 'Bloco 2';
     BEGIN
-        DBMS_OUTPUT.PUT_LINE('Referencia variável Bloco 1: ' || vnumero1);
+        DBMS_OUTPUT.PUT_LINE('Referencia variável Bloco 1: ' || vBloco1);
         DBMS_OUTPUT.PUT_LINE('Referencia variável Bloco 2: ' || vBloco2);
     END;
     
-    DBMS_OUTPUT.PUT_LINE('Referencia variável Bloco 1: ' || vnumero1);
+    DBMS_OUTPUT.PUT_LINE('Referencia variável Bloco 1: ' || vBloco1);
 END;
 
 
@@ -213,7 +213,7 @@ DECLARE
     vFirst_name   employees.first_name%type;
     vLast_name    employees.last_name%type;
     vSalary       employees.salary%type;
-    vEmployee_id  employees.employee_id%type := 230;
+    vEmployee_id  employees.employee_id%type := 199;
 BEGIN 
     SELECT
         first_name, last_name, salary
@@ -584,14 +584,13 @@ BEGIN
     FROM employees;
         FOR i IN employees_table.first..employees_table.last 
         LOOP
-            /*DBMS_OUTPUT.PUT_LINE(
+            DBMS_OUTPUT.PUT_LINE(
                 employees_table(i).employee_id  || ' - ' ||
                 employees_table(i).first_name   || ' - ' || 
                 employees_table(i).last_name    || ' - ' ||
                 employess_table(i).phone_number || ' - ' ||
-                employees_table(i).job_id       || ' - ' ||
-                to_char(employees_table(i).salary,'99G999G999D99')*/
-            );
+                employees_table(i).job_id       || ' - ' );
+           
         END LOOP;
 END;
 
@@ -682,11 +681,11 @@ BEGIN
     FROM employees;
     FOR I in employees_table.first..employees_table.last LOOP
         DBMS_OUTPUT.PUT_LINE(
-            employees_table(I).employee_id  || ' - '
-            employees_table(I).first_name   || ' - '
-            employees_table(I).last_name    || ' - '
-            employees_table(I).phone_number || ' - '
-            employees_table(I).job_id       || ' - '
+            employees_table(I).employee_id  || ' - ' ||
+            employees_table(I).first_name   || ' - ' ||
+            employees_table(I).last_name    || ' - ' ||
+            employees_table(I).phone_number || ' - ' ||
+            employees_table(I).job_id       || ' - ' ||
             To_char(employees_table(I).salary, '99G999G999D9')
         );
     END LOOP;
@@ -706,11 +705,11 @@ BEGIN
     FROM employees;
     FOR i in employees_table.first..employees_table.last LOOP
         DBMS_OUTPUT.PUT_LINE(
-            employees_table(i).employee_id   || ' - '
-            employees_table(i).first_name    || ' - '
-            employees_table(i).last_name     || ' - '
-            employees_table(i).phone_number  || ' - '
-            employees_table(i).job_id        || ' - '
+            employees_table(i).employee_id   || ' - ' ||
+            employees_table(i).first_name    || ' - ' ||
+            employees_table(i).last_name     || ' - ' ||
+            employees_table(i).phone_number  || ' - ' ||
+            employees_table(i).job_id        || ' - ' ||
             to_char(employees_table(i).salary, '99G999G999D99')
         );
     END LOOP;
@@ -936,7 +935,7 @@ BEGIN
     WHERE employee_id = vEmployee_id;
     
     IF vJob_id = 'AD_PRES' THEN
-        RAISE ePresident
+        RAISE ePresident;
     END IF;
     
 EXCEPTION
@@ -1121,15 +1120,15 @@ SET VERIFY OFF
 DECLARE 
     employees_record employees%ROWTYPE;
 BEGIN
-    PRC_CONSULTA_EMPREGADO(100,employees_record.first_name, employees_record.last_name, employees_record.email
+    PRC_CONSULTA_EMPREGADO(100,employees_record.first_name, employees_record.last_name, employees_record.email,
     employees_record.phone_number, employees_record.hire_date, employees_record.job_id, employees_record.salary,
     employees_record.commission_pct, employees_record.manager_id, employees_record.department_id);
     DBMS_OUTPUT.PUT_LINE(
-        employees_record.first_name || ' '
-        employees_record.last_name || ' '
-        employees_record.department_id || ' '
-        employees_record.job_id || ' '
-        employees_record.phone_number || ' '
+        employees_record.first_name || ' ' ||
+        employees_record.last_name || ' ' ||
+        employees_record.department_id || ' ' ||
+        employees_record.job_id || ' ' ||
+        employees_record.phone_number || ' ' ||
         LTRIM(TO_CHAR(employees_record.salary, 'L99G999G999D99'))
     );
 END;
@@ -1427,3 +1426,169 @@ SELECT
 FROM 
     user_objects
 WHERE STATUS = 'INVALID';
+
+
+
+----------------------------------------------------------
+--Aula 62 - Gerenciando Dependencias do Oracle
+
+
+--Executando o script UTLDTREE
+
+@C:\app\lucas\product\18.0.0\dbhomeXE\rdbms\admin\ult.sql
+
+
+-- Executando a procedure DEPTREE_FILL
+
+exec  DEPTREE_FILL('TABLE','HR','EMPLOYEES');
+
+-- Ultilizando as Visões DEPTREE
+
+DESC deptree;
+
+SELECT *
+FROM   deptree
+ORDER BY seq#;
+
+
+
+---- 64 - Debugando procedures e Funcions
+
+--- Concedendo privilégios para o usuário HR
+grant DEBUG CONNECT SESSION, DEBUG ANY PROCEDURE to hr;
+
+
+---Liberando privilégios para o hr
+
+BEGIN
+    DBMS_NETWORK_ACL_ADMIN.APPEND_HOST_ACE(
+        host => '127.0.0.1',
+        lower_port     => null,
+        upper_port     => null,
+        ace            => xs$ace_type(privilege_list => xs$name_list('jdwp'),
+        principal_name => 'hr',
+        principal_type => xs_acl.ptype_db)
+    );
+END;
+
+---- 66 - Criando o Package Specification
+----
+
+CREATE OR REPLACE PACKAGE PCK_EMPREGADOS
+IS
+
+    pMinSalary   employees.salary%type;
+    
+    PROCEDURE  PRC_INSERE_EMPREGADO
+    (
+        pfirst_name     IN VARCHAR2,
+        plast_name      IN VARCHAR2,
+        pemail          IN VARCHAR2,
+        pphone_number   IN VARCHAR2,
+        phire_date      IN DATE DEFAULT SYSDATE,
+        pjob_id         IN VARCHAR2,
+        pSALARY         IN NUMBER,
+        pCOMMICION_PCT  IN NUMBER, 
+        pMANAGER_ID     IN NUMBER,
+        pDEPARTMENT_ID  IN NUMBER
+    );
+    
+    PROCEDURE PRC_AUMENTA_SALARIO_EMPREGADO
+    (
+        pemployee_id     IN NUMBER,
+        ppercentual      IN NUMBER
+    );
+    
+    FUNCTION FNC_CONSULTA_SALARIO_EMPREGADO(pemployee_id IN NUMBER) RETURN NUMBER;
+    
+END PCK_EMPREGADOS;
+
+
+---- 67 - Criando o Package body
+----
+
+CREATE OR REPLACE PACKAGE BODY PCK_EMPREGADOS
+IS
+    PROCEDURE  PRC_INSERE_EMPREGADO
+        (
+            pfirst_name     IN VARCHAR2,
+            plast_name      IN VARCHAR2,
+            pemail          IN VARCHAR2,
+            pphone_number   IN VARCHAR2,
+            phire_date      IN DATE DEFAULT SYSDATE,
+            pjob_id         IN VARCHAR2,
+            pSALARY         IN NUMBER,
+            pCOMMICION_PCT  IN NUMBER, 
+            pMANAGER_ID     IN NUMBER,
+            pDEPARTMENT_ID  IN NUMBER
+        )
+        IS
+            --Nenhuma váriavel declarada
+        BEGIN
+            INSERT INTO employees(
+                employee_id,
+                first_name,
+                last_name,
+                email,
+                phone_number,
+                hire_date,
+                job_id,
+                salary,
+                commission_pct,
+                manager_id,
+                department_id        
+            )
+            VALUES
+            (
+                EMPLOYEES_SEQ.nextval,
+                pfirst_name,
+                plast_name,
+                pemail,
+                pphone_number,
+                phire_date,
+                pjob_id,
+                psalary,
+                pcommicion_pct,
+                pMANAGER_ID,
+                pdepartment_id
+            );
+        EXCEPTION
+            WHEN OTHERS THEN 
+                RAISE_APPLICATION_ERROR(-20001, 'Erro Oracle' || SQLCODE || SQLERRM);
+        END; 
+        
+        PROCEDURE PRC_AUMENTA_SALARIO_EMPREGADO
+        (
+            pemployee_id IN NUMBER,
+            ppercentual  IN NUMBER
+        )
+        IS 
+        
+        BEGIN 
+            UPDATE employees
+            SET    salary = salary * (1 + ppercentual/100)
+            WHERE employee_id = pemployee_id;
+        EXCEPTION
+            WHEN OTHERS THEN
+                RAISE_APPLICATION_ERROR(-20001,'Erro Oracle '|| SQLCODE || SQLERRM);
+        END;
+        
+        FUNCTION FNC_CONSULTA_SALARIO_EMPREGADO
+            (pemployee_id IN NUMBER)
+        RETURN NUMBER
+        IS 
+            vsalary employees.salary%type;
+        BEGIN 
+            SELECT salary
+            INTO   vsalary
+            FROM   employees
+            WHERE  employee_id = pemployee_id;
+            RETURN (vsalary);
+        EXCEPTION
+            WHEN NO_DATA_FOUND THEN
+                RAISE_APPLICATION_ERROR(-20001,'Empregado Inexistente');
+            WHEN OTHERS THEN 
+                RAISE_APPLICATION_ERROR(-20002,'Erro Oracle '|| SQLCODE || SQLERRM);
+        END;
+END PCK_EMPREGADOS;
+
