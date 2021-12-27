@@ -1,4 +1,4 @@
-SET SERVEROUTPUT ON
+sd xSET SERVEROUTPUT ON
 DECLARE
     /*
         ':=' Inicializa váriaveis
@@ -1525,6 +1525,9 @@ IS
         IS
             --Nenhuma váriavel declarada
         BEGIN
+            IF pSalary < PCK_EMPREGADOS.pSalary THEN
+                RAISE_APPLICARTION_ERROR(-20002,'Salário não pode ser inferior ao menor salario dos empregados!');
+            END IF;
             INSERT INTO employees(
                 employee_id,
                 first_name,
@@ -1592,3 +1595,13 @@ IS
         END;
 END PCK_EMPREGADOS;
 
+
+
+---- 68 - Referenciando componentes de uma Package
+----
+
+BEGIN
+    PCK_EMPREGADOS.PRC_INSERE_EMPREGADO('John','Lenon','JLENON','515.258.4861',SYSDATE,'IT_PROG',20000,NULL,103,60);
+END;
+
+COMMIT;
