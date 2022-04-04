@@ -1,4 +1,4 @@
-sd xSET SERVEROUTPUT ON
+SET SERVEROUTPUT ON
 DECLARE
     /*
         ':=' Inicializa váriaveis
@@ -1625,6 +1625,326 @@ DROP PACKAGE BODY PCK_EMPREGADOS;
 DROP PACKAGE PCK_EMPREGADOS;
 
 
----73 - DATBASE DML TRIGGER
+---74 - DATBASE DML TRIGGER
 --
+
+
+CREATE OR REPLACE TRIGGER B_I_EMPLOYEES_S_TRG
+BEFORE INSERT 
+ON employees
+BEGIN 
+    IF (TO_CHAR(SYSDATE,'DAY') IN ('SABADO','DOMINGO') OR
+        TO_NUMBER(TO_CHAR(SYSDATE,'HH24')) NOT BETWEEN 8 AND 18)
+    THEN
+        RAISE_APPLICATION_ERROR(-20001,'O cadastro de Empregados só é permitido em dias de semana do horário comercial');
+    END IF;
+END;
+
+DROP TRIGGER B_I_EMPLOYEES_S_TRG;
+
+--Testando a validação da Trigger 
+
+BEGIN 
+    pck_empregados.prc_insere_empregado('George','Harrison','GHARRISON','515.258.5690',SYSDATE,'IT_PROG',25000,NULL,103,60);
+    COMMIT;
+END;
+
+
+---Criando uma Trigger Combinando Vários Eventos
+
+CREATE OR REPLACE TRIGGER B_I_VALIDA_HORARIO_EMPLOYEES_R_TRG
+BEFORE INSERT OR UPDATE OR DELETE 
+ON employees
+BEGIN 
+    IF (TO_CHAR(SYSDATE,'DAY') IN ('SABADO','DOMINGO') OR
+        TO_NUMBER(TO_CHAR(SYSDATE,'HH24')) NOT BETWEEN 8 AND 18)
+    THEN
+        CASE 
+            WHEN INSERTING
+            THEN 
+                RAISE_APPLICATION_ERROR(-20001,'O cadastro de Empregados só é permitido em dias de semana, dentro do horário comercial.');
+            WHEN DELETING 
+            THEN 
+                RAISE_APPLICATION_ERROR(-20001,'O cadastro de Empregados só é permitido em dias de semana, dentro do horário comercial.');
+            ELSE 
+                RAISE_APPLICATION_ERROR(-20001,'O cadastro de Empregados só é permitido em dias de semana, dentro do horário comercial.');
+            END CASE;
+    END IF;
+END;
+
+DROP TRIGGER B_I_VALIDA_HORARIO_EMPLOYEES_R_TRG;
+
+--Testando a validação da Trigger 
+
+BEGIN 
+    pck_empregados.prc_insere_empregado('George','Harrison','GHARRISON','515.258.5690',SYSDATE,'IT_PROG',25000,NULL,103,60);
+    COMMIT;
+END;
+
+
+
+
+
+---75 - Mutatin Tables 
+--
+
+/*
+    Regra 1 de Mutanting 
+*/
+/*
+CREATE OR REPLACE TRIGGER A_I_EMPLOYEES_R_TRG
+AFTER INSERT 
+ON employees
+FOR EACH ROW
+BEGIN 
+    UPDATE employees
+    SET    email = UPPER(SUBSTR(:new.first_name,1,1)|| :new.last_name)
+    WHERE  employee_id = :new.employee_id;
+END;
+*/
+CREATE OR REPLACE TRIGGER A_I_EMPLOYEES_R_TRG
+BEFORE INSERT 
+ON employees
+FOR EACH ROW
+BEGIN 
+    UPDATE employees
+    SET    email = UPPER(SUBSTR(:new.first_name,1,1)|| :new.last_name)
+    WHERE  employee_id = :new.employee_id;
+END;
+
+---Testando Violação da Regra 1
+
+SET VERIFY OFF
+BEGIN 
+  prc_insere_empregado('Eric','Claption','ECLAPTION','515.188.4861',SYSDATE,'IT_PROG',15000,NULL,103,60);
+  commit;
+END;
+
+CREATE OR REPLACE TRIGGER B_U_VALIDADE_SALARY_EMPLOYEES_R_TRG
+BEFORE UPDATE OF salary
+ON employees
+FOR EACH ROW
+DECLARE 
+    vMaxSalary   employees.salary%TYPE;
+BEGIN 
+    SELECT MAX(salary)
+    INTO   vMaxSalary
+    FROM   employees;
+    
+    IF :new.salary > vMaxSalary * 1.2 THEN
+        RAISE_APPLICATION_ERROR(-20001,'Salario não pode ser superior ao maior salario de + 20%');
+    END IF;
+END;
+
+SET VERIFY OFF
+UPDATE employees
+SET    salary = 70000
+WHERE  employee_id = 100;
+
+DROP TRIGGER A_I_EMPLOYEES_R_TRG;
+
+DROP TRIGGER B_U_VALIDADE_SALARY_EMPLOYEES_R_TRG;
+
+CREATE OR REPLACE PACKAGE PKG_EMPLOYEES_DADOS
+AS 
+    TYPE max_salary_table_type IS TABLE OF NUMBER(10,2)
+    INDEX BY BINARY_INTEGER;
+    
+    gmax_salary max_salary_table_type;
+END PKG_EMPLOYEES_DADOS;
+
+
+CREATE OR REPLACE TRIGGER B_IU_VALIDATE_SALARY_EMPLOYEES_S_TRG
+BEFORE INSERT OR UPDATE OF salary
+ON employees 
+--FOR EACH ROW
+DECLARE 
+    vmax_salary  employees.salary%TYPE;
+    BEGIN 
+        SELECT max(salary)
+        INTO   PKG_EMPLOYEES_DADOS.gmax_salary(1)
+        FROM   employees;
+        
+END;
+
+
+CREATE OR REPLACE TRIGGER B_IU_VALIDATE_SALARY_EMPLOYEES_R_TRG
+BEFORE INSERT OR UPDATE OF salary
+ON employees
+FOR EACH ROW 
+DECLARE 
+    vmax_salary  employees.salary%TYPE;
+    BEGIN 
+        IF :new.salary > PKG_EMPLOYEES_DADOS.gmax_salary(1) * 1.2 THEN
+            RAISE_APPLICATION_ERROR(-20001,'Novo salario não pode ser superior ao maiopr salario + 20%');
+        END IF;
+END;
+
+SET VERIFY OFF
+UPDATE employees
+SET   SALARY = 70000
+WHERE  employee_id = 100;
+
+---- 77 - Desabilitando e Habilitando Trigger
+----
+
+
+--Desabilitando Database DML Trigger 
+
+ALTER TRIGGER B_IUD_VALIDA_HORARIO_EMPLOYEES_S_TRG disable;
+
+--Habilitando Database DML Triggers
+
+ALTER TRIGGER B_IUD_VALIDA_HORARIO_EMPLOYEES_S_TRG disable;
+
+--Desabilitando todas Database DML Triggers da tabela employees
+
+ALTER TABLE employees DISABLE ALL TRIGGERS;
+
+--Habilitando todas Database DML Triggers da tabela employees
+
+ALTER TABLE employees ENABLE ALL TRIGGERS;
+
+-----------------------------------------------------
+
+--78 Consultando Database DML Triggers pelo dicionário de Dados
+--
+
+SELECT * 
+FROM   user_triggers
+WHERE  table_name  = 'EMPLOYEES' AND 
+       table_owner = 'HR';
+
+
+
+-- 79 - Removendo uma Database DML Trigger
+--
+DROP TRIGGER B_IUD_VALIDA_HORARIO_EMPLOYEES_S_TRG;
+
+
+
+-- 81 Ultilizando SYSREFCURSOR
+--
+
+--
+-- Seção 23 - PL/SQL Avançado - Utilizando SYS_REFCURSOR
+--
+-- Aula 1 - Utilizando SYS_REFCURSOR
+--
+
+-- Utilizando SYS_REFCURSOR
+
+CREATE OR REPLACE PROCEDURE PRC_CURSOR_EMPLOYEES
+  (pemployees_cursor OUT SYS_REFCURSOR)
+IS
+BEGIN
+  OPEN pemployees_cursor 
+  FOR
+	SELECT first_name, last_name 
+	FROM employees;
+	
+END PRC_CURSOR_EMPLOYEES;
+
+-- Procedure referenciando o Parametro OUT SYS_REFCURSOR
+
+CREATE OR REPLACE PROCEDURE PRC_DISPLAY_EMPOYEES
+IS
+  employees_cursor  SYS_REFCURSOR;
+  vfirst_name  employees.first_name%TYPE;
+  vlast_name   employees.last_name%TYPE;
+BEGIN
+  PRC_CURSOR_EMPLOYEES(employees_cursor);
+  
+  LOOP
+    FETCH  employees_cursor
+    INTO   vfirst_name, vlast_name;
+    EXIT   WHEN employees_cursor%NOTFOUND;
+	
+    DBMS_OUTPUT.PUT_LINE(vfirst_name || ' ' || vlast_name);
+
+  END LOOP;
+  
+  CLOSE employees_cursor;
+  
+END PRC_DISPLAY_EMPOYEES;
+
+-- Executando a Procedure PRC_DISPLAY_EMPOYEES
+
+SET SERVEROUTPUT ON
+SET VERIFY OFF
+execute PRC_DISPLAY_EMPOYEES
+
+-- Variável Cursor e Reference Cursor 
+
+CREATE OR REPLACE FUNCTION FNC_GET_EMPOYEES
+  (pemployee_id  IN NUMBER)
+  RETURN SYS_REFCURSOR
+IS
+  employees_cursor  SYS_REFCURSOR;
+BEGIN
+  OPEN employees_cursor  
+  FOR
+    SELECT first_name, last_name
+    FROM   employees
+    WHERE  employee_id = pemployee_id;
+    
+  RETURN employees_cursor;
+  
+END FNC_GET_EMPOYEES;
+
+-- Referenciando a Função
+
+CREATE OR REPLACE PROCEDURE PRC_DISPLAY_EMPOYEES2
+  (pemployee_id IN NUMBER)
+IS
+  employees_cursor  SYS_REFCURSOR;
+  vfirst_name  employees.first_name%TYPE;
+  vlast_name   employees.last_name%TYPE;
+BEGIN
+  employees_cursor := FNC_GET_EMPOYEES(pemployee_id);
+  
+  LOOP
+    FETCH  employees_cursor
+    INTO   vfirst_name, vlast_name;
+    EXIT WHEN employees_cursor%NOTFOUND;
+	
+    DBMS_OUTPUT.PUT_LINE(vfirst_name || ' ' || vlast_name);
+
+  END LOOP;
+  
+  CLOSE employees_cursor;
+END PRC_DISPLAY_EMPOYEES2;
+
+-- Executando a procedure 
+
+SET SERVEROUTPUT ON
+SET VERIFY OFF
+execute PRC_DISPLAY_EMPOYEES2(100)
+
+--83 - Associative Array of Records Bulk Collect
+--
+
+SET SERVEROUTPUT ON
+SET VERIFY OFF
+DECLARE 
+    TYPE employees_table_type IS TABLE OF employees%rowtype
+    INDEX BY BINARY_INTEGER; --Type Associative Array
+    employees_table employees_table_type;
+BEGIN
+    SELECT * 
+        BULK COLLECT INTO employees_table --Bulk Collect de todos (order_id) para a Collection (vOrder_id)
+    FROM 
+        employees;
+    FOR i IN employees_table.first..employees_table.last
+    LOOP
+        dbms_output.put_line(employees_table(i).employee_id || ' - ' || 
+                             employees_table(i).first_name  || ' - ' || 
+                             employees_table(i).last_name   || ' - ' || 
+                             employees_table(i).phone_number || ' - ' || 
+                             employees_table(i).job_id || ' - ' ||
+                             TO_CHAR(employees_table(i).salary,'99g999g999d99')
+                             );
+                             
+    END LOOP;
+END;
 
