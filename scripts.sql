@@ -1948,3 +1948,546 @@ BEGIN
     END LOOP;
 END;
 
+--84  - Nested Table of Records - Bulk Collect
+--
+
+SET SERVEROUTPUT ON
+SET VERIFY OFF
+DECLARE
+    TYPE employees_table_type IS TABLE OF employees%rowtype;
+    employees_table employees_table_type := employees_table_type();
+BEGIN
+    SELECT * 
+        BULK COLLECT INTO employees_table
+    FROM employees;
+    FOR i in employees_table.first..employees_table.last
+    LOOP
+        DBMS_OUTPUT.PUT_LINE(
+            employees_table(i).employee_id || ' - ' ||
+            employees_table(i).first_name || ' - ' ||
+            employees_table(i).last_name || ' - ' || 
+            employees_table(i).phone_number || ' - ' ||
+            employees_table(i).job_id || ' - ' ||
+            TO_CHAR(employees_table(i).salary,'99G999G999D99')
+        );
+    END LOOP;
+END;
+
+
+-- 85 - Varray of Records - Bulk Collect
+--
+
+SET SERVEROUTPUT ON 
+SET VERIFY OFF
+DECLARE 
+     TYPE employees_table_type IS VARRAY(200) OF employees%rowtype;
+     employees_table    employees_table_type := employees_table_type();
+BEGIN 
+    SELECT *
+        BULK COLLECT INTO employees_table
+    FROM employees;
+    FOR i IN employees_table.first..employees_table.last
+    LOOP
+        DBMS_OUTPUT.PUT_LINE(
+            employees_table(i).employee_id || ' - ' || 
+            employees_table(i).first_name || ' - ' ||
+            employees_table(i).last_name || ' - ' ||
+            employees_table(i).phone_number || ' - ' ||
+            employees_table(i).job_id || ' - ' ||
+            TO_CHAR(employees_table(i).salary,'99G999G999D99')
+        );
+    END LOOP;
+END;
+
+
+--86 - Ultilizando Métodos para controlar Collections
+--
+
+SET SERVEROUTPUT ON 
+SET VERIFY OFF
+DECLARE 
+     TYPE employees_table_type IS VARRAY(200) OF employees%rowtype;
+     employees_table    employees_table_type := employees_table_type();
+BEGIN 
+    SELECT *
+        BULK COLLECT INTO employees_table
+    FROM employees;
+    
+    --retornando do primeiro ao ultimo elemento do array
+    FOR i IN employees_table.first..employees_table.last
+    LOOP
+        DBMS_OUTPUT.PUT_LINE(
+            employees_table(i).employee_id || ' - ' || 
+            employees_table(i).first_name || ' - ' ||
+            employees_table(i).last_name || ' - ' ||
+            employees_table(i).phone_number || ' - ' ||
+            employees_table(i).job_id || ' - ' ||
+            TO_CHAR(employees_table(i).salary,'99G999G999D99')
+        );
+    END LOOP;
+END;
+
+
+--87 Bulk collect e For All
+--
+
+
+-- Bulk Collect 
+
+SELECT count(*)
+FROM   employees;
+
+SET SERVEROUTPUT ON
+SET VERIFY OFF
+CREATE OR REPLACE PROCEDURE PRC_UPDATE_SALARY
+  (ppercentual IN NUMBER)
+AS
+  TYPE employee_id_table_type IS TABLE OF employees.employee_id%TYPE 
+  INDEX BY BINARY_INTEGER;  -- Type Associative Array
+  employee_id_table  employee_id_table_type;
+BEGIN
+  SELECT DISTINCT employee_id 
+    BULK COLLECT INTO employee_id_table  
+  FROM employees;
+  
+  DBMS_OUTPUT.PUT_LINE('Linhas recuperadas: ' || employee_id_table.COUNT);
+  
+  FOR indice IN 1..employee_id_table.COUNT  LOOP 
+    UPDATE employees e
+    SET    e.salary = e.salary * (1 + ppercentual / 100)
+    WHERE  e.employee_id = employee_id_table(indice);   -- para cada UPDATE dentro do FOR LOOP Ocorrerá troca de contexto (Context Switch) 
+	--
+    -- outro comandos
+    --
+  END LOOP;
+	
+END;
+
+-- Consultando antes
+
+SELECT *
+FROM employees;
+
+--- Executando PRC_UPDATE_TAX 
+
+exec PRC_UPDATE_SALARY(10)
+
+-- Consultando depois
+
+SELECT *
+FROM employees;
+
+ROLLBACK;
+
+-- Bulk Collect - FOR ALL
+
+SET SERVEROUTPUT ON
+SET VERIFY OFF
+CREATE OR REPLACE PROCEDURE PRC_UPDATE_SALARY
+  (ppercentual IN NUMBER)
+AS
+  TYPE employee_id_table_type IS TABLE OF employees.employee_id%TYPE 
+  INDEX BY BINARY_INTEGER;  -- Type Associative Array
+  employee_id_table  employee_id_table_type;
+BEGIN
+
+  SELECT DISTINCT employee_id 
+    BULK COLLECT INTO employee_id_table  
+  FROM employees;
+  
+  DBMS_OUTPUT.PUT_LINE('Linhas recuperadas: ' || employee_id_table.COUNT);
+  
+  FORALL indice IN 1..employee_id_table.COUNT  -- FOR ALL empacota todos os UPDATES e envia o pacote em 1 única troca de contexto (Context Switch)
+    UPDATE employees e
+    SET    e.salary = e.salary * (1 + ppercentual / 100)
+    WHERE  e.employee_id = employee_id_table(indice); 
+	
+END;
+
+-- Consultando
+
+SELECT *
+FROM employees;
+
+--- Executando PRC_UPDATE_TAX 
+
+exec PRC_UPDATE_SALARY(10)
+
+-- Consultando
+
+SELECT *
+FROM employees;
+
+ROLLBACK;
+
+--88 Bulk Collect com Limit
+--
+
+SELECT COUNT(*)
+FROM employees;
+
+SET SERVEROUTPUT ON
+SET VERIFY OFF
+CREATE OR REPLACE PROCEDURE PRC_UPDATE_SALARY2
+  (ppercentual IN NUMBER)
+AS
+  vLimit CONSTANT INTEGER(2) := 30;
+  TYPE employee_id_table_type IS TABLE OF employees.employee_id%TYPE 
+  INDEX BY BINARY_INTEGER;  -- Type Associative Array
+  employee_id_table  employee_id_table_type;
+  CURSOR employees_cursor IS
+    SELECT employee_id 
+    FROM employees;
+BEGIN
+
+  OPEN employees_cursor;
+  
+  LOOP
+    FETCH employees_cursor 
+    BULK COLLECT INTO employee_id_table LIMIT vlimit;
+    
+    EXIT WHEN employee_id_table.COUNT = 0;
+    
+    DBMS_OUTPUT.PUT_LINE('Linhas recuperadas: ' || employee_id_table.COUNT);
+    
+    FORALL indice IN 1..employee_id_table.COUNT 
+      
+      UPDATE employees e
+      SET    e.salary = e.salary * (1 + ppercentual / 100)
+      WHERE  e.employee_id = employee_id_table(indice);  
+    
+  END LOOP;
+  
+  CLOSE employees_cursor;
+  -- COMMIT;
+  
+END;
+
+SELECT *
+FROM employees;
+
+--- Executando PRC_UPDATE_SALARY2 
+
+exec PRC_UPDATE_SALARY2(10)
+
+-- Consultando
+
+SELECT *
+FROM employees;
+
+ROLLBACK;
+
+
+--89 SQL Dinâmico -
+--Execute Immediate
+
+SET SERVEROUTPUT ON
+SET VERIFY OFF 
+CREATE OR REPLACE PROCEDURE PRC_FETCH_EMPLOEES_DYNAMIC
+    (pmanager_id      IN employees.manager_id%type DEFAULT NULL,
+     pdepartment_id   IN employees.department_id%TYPE DEFAULT NULL)
+AS
+    vemployees_record   employees%ROWTYPE;
+    vsql                VARCHAR2(600) := ' SELECT *
+                                           FROM employees
+                                           WHERE 1=1 ';
+                                           
+    TYPE employees_table_type  IS TABLE OF employees%rowtype
+    INDEX BY PLS_INTEGER;
+    employees_table   employees_table_type;
+BEGIN
+    IF pmanager_id IS NOT NULL THEN
+        vsql := vsql || ' AND manager_id = ' || pmanager_id;
+    END IF;
+    
+    IF pdepartment_id IS NOT NULL THEN
+        vsql := vsql  || ' AND department_id = ' || pdepartment_id;
+    END IF;
+    
+    DBMS_OUTPUT.PUT_LINE(vsql);
+    
+    EXECUTE IMMEDIATE vsql
+    BULK COLLECT INTO employees_table;
+    
+    FOR i IN 1..employees_table.COUNT LOOP
+
+        DBMS_OUTPUT.PUT_LINE(
+            employees_table(i).employee_id  || ' - ' ||
+            employees_table(i).first_name   || ' - ' ||
+            employees_table(i).last_name    || ' - ' ||
+            employees_table(i).email        || ' - ' ||
+            employees_table(i).manager_id   || ' - ' ||
+            employees_table(i).department_id
+        );
+
+    END LOOP;
+EXCEPTION
+    WHEN OTHERS THEN
+        RAISE_APPLICATION_ERROR(-20001,'Erro Oracle '|| SQLCODE || SQLERRM);
+END;
+
+--Executando a procedure
+
+EXEC PRC_FETCH_EMPLOEES_DYNAMIC(pmanager_id => 103, pdepartment_id => 60)
+
+EXEC PRC_FETCH_EMPLOEES_DYNAMIC(pmanager_id => 103)
+
+EXEC PRC_FETCH_EMPLOEES_DYNAMIC(pdepartment_id => 60)
+
+
+--- Alterando a senha de um usuário de banco de dados 
+
+ALTER USER HR PASSWORD EXPIRE;
+ALTER USER HR IDENTIFIED BY xyz123;
+
+
+-- 90 - SQL Dinamico - Execute Immediate e váriaveis Bind
+--
+
+-- SQL Dinamico - EXECUTE IMMEDIATE e variáveis Bind
+
+
+SET SERVEROUTPUT ON
+SET VERIFY OFF
+CREATE OR REPLACE PROCEDURE PRC_FETCH_EMPLOYEES_DYNAMIC_BIND
+  (pmanager_id         IN employees.manager_id%TYPE DEFAULT NULL,
+   pdepartment_id      IN employees.department_id%TYPE DEFAULT NULL)
+AS
+  vemployees_record  employees%ROWTYPE;
+  vsql               VARCHAR2(600) := 'SELECT *
+                                       FROM employees
+                                       WHERE 1=1 ';
+  TYPE  employees_table_type IS TABLE OF employees%ROWTYPE   -- Associative Array
+  INDEX BY PLS_INTEGER;
+  employees_table            employees_table_type;
+  
+BEGIN
+
+  IF  pmanager_id IS NOT NULL THEN
+      vsql := vsql || ' AND manager_id = :manager_id';
+  END IF;
+  
+  IF  pdepartment_id IS NOT NULL THEN
+      vsql := vsql || ' AND department_id = :department_id';
+  END IF;
+  
+  DBMS_OUTPUT.PUT_LINE(vsql);
+  
+  CASE
+    WHEN pmanager_id IS NOT NULL AND pdepartment_id IS NOT NULL THEN
+         EXECUTE IMMEDIATE vsql BULK COLLECT INTO employees_table USING pmanager_id, pdepartment_id;
+    WHEN pmanager_id IS NOT NULL AND pdepartment_id is NULL THEN
+         EXECUTE IMMEDIATE vsql BULK COLLECT INTO employees_table USING pmanager_id;
+    WHEN pmanager_id IS NULL AND pdepartment_id IS NOT NULL THEN
+         EXECUTE IMMEDIATE vsql BULK COLLECT INTO employees_table USING pdepartment_id;
+    ELSE
+         EXECUTE IMMEDIATE vsql BULK COLLECT INTO employees_table;
+  END CASE;    
+  
+  FOR i IN 1..employees_table.COUNT  LOOP
+  
+    DBMS_OUTPUT.PUT_LINE(employees_table(i).employee_id || ' - ' ||
+                         employees_table(i).first_name || ' - ' ||
+                         employees_table(i).last_name || ' - ' ||
+                         employees_table(i).email || ' - ' ||
+                         employees_table(i).manager_id || ' - ' ||
+                         employees_table(i).department_id);
+    
+  END LOOP;
+  
+EXCEPTION
+  WHEN OTHERS THEN 
+       RAISE_APPLICATION_ERROR(-20001,'Erro Oracle ' || SQLCODE || SQLERRM);
+END;
+
+-- Executando a procedure
+
+exec PRC_FETCH_EMPLOYEES_DYNAMIC_BIND(pmanager_id => 103, pdepartment_id => 60)
+
+exec PRC_FETCH_EMPLOYEES_DYNAMIC_BIND(pmanager_id => 103)
+
+exec PRC_FETCH_EMPLOYEES_DYNAMIC_BIND(pdepartment_id => 60)
+
+exec PRC_FETCH_EMPLOYEES_DYNAMIC_BIND;
+
+
+-------------------------------------------------------------
+---------------------
+
+
+--
+-- Oracle PL/SQL Avançado 
+--
+-- Seção 27 - SQL Dinâmico -  DBMS_SQL
+
+-- Aula 1 - SQL Dinamico - DBMS_SQL
+
+-- SQL Dinamico - DBMS_SQL
+
+-- Comando DML
+
+SET SERVEROUTPUT ON
+SET VERIFY OFF
+CREATE OR REPLACE PROCEDURE PRC_UPDATE_SALARY_EMPLOYEE
+  (pemployee_id        IN employees.employee_id%TYPE,
+   ppercentual         IN NUMBER)
+IS
+  vcursor_id       INTEGER;
+  vrows_processed  INTEGER;
+BEGIN
+
+  -- OPEN Cursor
+  vcursor_id  := DBMS_SQL.OPEN_CURSOR;
+  
+  -- Parsing comando SQL
+  DBMS_SQL.PARSE(vcursor_id, 'UPDATE employees
+                              SET    salary = salary * (1 + (:gpercentual/100))
+                              WHERE  employee_id = :gemployee_id', DBMS_SQL.NATIVE);
+
+  -- Binding Variáveis
+  DBMS_SQL.BIND_VARIABLE(vcursor_id, ':gpercentual', ppercentual);
+  DBMS_SQL.BIND_VARIABLE(vcursor_id, ':gemployee_id', pemployee_id);
+  
+  -- Executando o Cursor
+  vrows_processed := DBMS_SQL.EXECUTE(vcursor_id);
+  
+  -- CLOSE Cursor
+  DBMS_SQL.CLOSE_CURSOR(vcursor_id);
+   
+  --COMMIT;
+  
+EXCEPTION
+   WHEN OTHERS THEN 
+       RAISE_APPLICATION_ERROR(-20001,'Erro Oracle ' || SQLCODE || SQLERRM);
+END;
+
+-- Executando a procedure
+
+SELECT *
+FROM   employees;
+
+exec PRC_UPDATE_SALARY_EMPLOYEE(pemployee_id => 109, ppercentual => 10)
+
+SELECT *
+FROM   employees;
+
+ROLLBACK;		
+
+-- SQL Dinamico - DBMS_SQL
+
+-- Comando SELECT
+
+SET SERVEROUTPUT ON
+SET VERIFY OFF
+DECLARE
+
+  vcursor_id   INTEGER;
+  vrowcount    NUMBER;
+  vfirst_name  VARCHAR2(30);
+  vlast_name   VARCHAR2(30);
+
+BEGIN
+
+  vcursor_id  :=  DBMS_SQL.OPEN_CURSOR;
+
+  DBMS_SQL.PARSE(vcursor_id,'SELECT first_name,last_name FROM employees', DBMS_SQL.NATIVE);
+
+  DBMS_SQL.DEFINE_COLUMN(vcursor_id,1,vfirst_name,30);
+
+  DBMS_SQL.DEFINE_COLUMN(vcursor_id,2,vlast_name,30);
+
+  vrowcount := DBMS_SQL.EXECUTE_AND_FETCH(vcursor_id);
+
+  LOOP
+
+    EXIT WHEN DBMS_SQL.FETCH_ROWS(vcursor_id) = 0;
+
+    DBMS_SQL.COLUMN_VALUE(vcursor_id,1,vfirst_name);
+
+    DBMS_SQL.COLUMN_VALUE(vcursor_id,2,vlast_name);
+
+    DBMS_OUTPUT.PUT_LINE(vlast_name||', '||vfirst_name);
+
+   END LOOP;
+
+   DBMS_SQL.CLOSE_CURSOR(vcursor_id);
+
+END;
+
+
+-----------------------------------------------------------
+--
+-- Oracle PL/SQL Avançado 
+--
+-- Seção 28 - Cursor Explícito com SQL Dinâmico
+--
+-- Aula 1 - Cursor Explícito com SQL Dinâmico
+
+-- SQL Dinamico com Cursor
+
+SET SERVEROUTPUT ON
+SET VERIFY OFF
+CREATE OR REPLACE PROCEDURE PRC_FETCH_EMPLOYEES_CURSOR_DYNAMIC
+  (pmanager_id         IN employees.manager_id%TYPE DEFAULT NULL,
+   pdepartment_id      IN employees.department_id%TYPE DEFAULT NULL)
+AS
+  TYPE employees_cursor_type IS REF CURSOR;
+  employees_cursor           employees_cursor_type;
+  vemployees_record          employees%ROWTYPE;
+  vsql                       VARCHAR2(600) := 'SELECT *
+                                               FROM employees
+                                               WHERE 1=1 ';
+BEGIN
+  IF  pmanager_id IS NOT NULL THEN
+      vsql := vsql || ' AND manager_id = :manager_id';
+  END IF;
+  IF  pdepartment_id IS NOT NULL THEN
+      vsql := vsql || ' AND department_id = :department_id';
+  END IF;
+  
+  DBMS_OUTPUT.PUT_LINE(vsql);
+  
+  CASE
+    WHEN pmanager_id IS NOT NULL AND pdepartment_id IS NOT NULL THEN
+         OPEN employees_cursor FOR vsql USING pmanager_id, pdepartment_id;
+    WHEN pmanager_id IS NOT NULL AND pdepartment_id is NULL THEN
+         OPEN employees_cursor FOR vsql USING pmanager_id;
+    WHEN pmanager_id IS NULL AND pdepartment_id IS NOT NULL THEN
+         OPEN employees_cursor FOR vsql USING pdepartment_id;
+    ELSE
+         OPEN employees_cursor FOR vsql;
+  END CASE;  
+  
+  LOOP
+    FETCH  employees_cursor
+    INTO   vemployees_record;
+    
+    EXIT WHEN employees_cursor%NOTFOUND;
+    
+    DBMS_OUTPUT.PUT_LINE(vemployees_record.employee_id || ' - ' ||
+                         vemployees_record.first_name || ' - ' ||
+                         vemployees_record.last_name || ' - ' ||
+                         vemployees_record.email || ' - ' ||
+                         vemployees_record.manager_id || ' - ' ||
+                         vemployees_record.department_id);
+    
+  END LOOP;
+  
+  CLOSE employees_cursor;
+  
+EXCEPTION
+   WHEN OTHERS THEN 
+       RAISE_APPLICATION_ERROR(-20001,'Erro Oracle ' || SQLCODE || SQLERRM);
+END;
+
+-- Executando a procedure
+
+exec PRC_FETCH_EMPLOYEES_CURSOR_DYNAMIC(pmanager_id => 103, pdepartment_id => 60);
+
+exec PRC_FETCH_EMPLOYEES_CURSOR_DYNAMIC(pmanager_id => 103);
+
+exec PRC_FETCH_EMPLOYEES_CURSOR_DYNAMIC(pdepartment_id => 60);
+
+exec PRC_FETCH_EMPLOYEES_CURSOR_DYNAMIC;
+	  
+
